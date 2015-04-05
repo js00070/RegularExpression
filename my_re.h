@@ -12,7 +12,6 @@
 using namespace std;
 
 const char epsilon = '\0';
-
 struct Edge;
 struct Status;
 
