@@ -7,11 +7,12 @@
 #include <queue>
 #include <vector>
 #include <stack>
-#include <set>
+#include <hash_map>
 
 using namespace std;
 
 const char epsilon = '\0';
+
 struct Edge;
 struct Status;
 
@@ -30,13 +31,14 @@ struct Edge
 
 struct Status
 {
-	list<Edge> InEdges;
+//	list<Edge> InEdges;
 	list<Edge> OutEdges;
-	bool FinalStatus=false;
-	void AddIn(Status* S,char key)
-	{
-		InEdges.push_back(Edge(S,key,this));
-	}
+	bool BeginStatus = false;
+	bool FinalStatus = false;
+//	void AddIn(Status* S,char key)
+//	{
+//		InEdges.push_back(Edge(S,key,this));
+//	}
 	void AddOut(char key, Status* S)
 	{
 		OutEdges.push_back(Edge(this,key,S));
@@ -44,14 +46,14 @@ struct Status
 	void e_LinkStat(Status* S)
 	{
 		this->AddOut(epsilon, S);
-		S->AddIn(this, epsilon);
+//		S->AddIn(this, epsilon);
 	}
 };
 
 void StatLink(Status* start,char key,Status* end)
 {
 	start->AddOut(key,end);
-	end->AddIn(start,key);
+//	end->AddIn(start,key);
 }
 
 struct Expr
@@ -90,6 +92,11 @@ struct Expr
 		StatLink(End,epsilon,newStat);
 		this->Start = newStat;
 		this->End = newStat;
+	}
+
+	void Optional()
+	{
+		;
 	}
 };
 
@@ -138,7 +145,8 @@ struct NFA
 {
 	Status* Start;
 	Status* End;
-//	vector<Status> st;
+	vector<Status*> ValidStats;
+	vector<Status*> unValidStats;
 
 	NFA()
 	{}
@@ -220,6 +228,108 @@ struct NFA
 		this->Start = (exprST.top()).Start;
 		this->End = (exprST.top()).End;
 		(this->End)->FinalStatus = true;
+		(this->Start)->BeginStatus = true;
+	}
+
+	void GetStatsList()
+	{
+		hash_map<Status*, bool> vis1;
+		hash_map<Status*, bool> vis2;
+		hash_map<Status*, bool> ifValid;
+		Status* tmpStat;
+		queue<Status*> SQ;
+		this->ValidStats.push_back(Start);
+		SQ.push(this->Start);
+		vis1[this->Start] = true;
+		ifValid[this->Start] = true;
+		while (!SQ.empty())
+		{
+			tmpStat = SQ.front();
+			SQ.pop();
+			list<Edge>::iterator it;
+			for (it = tmpStat->OutEdges.begin(); it != tmpStat->OutEdges.end(); it++)
+				if (!vis1[it->End])
+				{
+					SQ.push(it->End);
+					vis1[it->End] = true;
+					if (it->MatchContent != epsilon)
+					{
+						this->ValidStats.push_back(it->End);
+						ifValid[it->End] = true;
+					}
+				}
+		}
+		SQ.push(this->Start);
+		vis2[this->Start] = true;
+		while (!SQ.empty())
+		{
+			tmpStat = SQ.front();
+			SQ.pop();
+			list<Edge>::iterator it;
+			for (it = tmpStat->OutEdges.begin(); it != tmpStat->OutEdges.end(); it++)
+				if (!vis2[it->End])
+				{
+					SQ.push(it->End);
+					vis2[it->End] = true;
+					if (it->MatchContent == epsilon && !ifValid[it->End])
+						this->unValidStats.push_back(it->End);
+				}
+		}
+	}
+
+	vector<Edge> e_closure(Status* start)
+	{
+		vector<Edge> res;
+		hash_map<Status*, bool> vis;
+		queue<Status*> SQ;
+		Status* tmpStat;
+		SQ.push(start);
+		vis[start] = true;
+		while (!SQ.empty())
+		{
+			tmpStat = SQ.front();
+			SQ.pop();
+			list<Edge>::iterator it;
+			for (it = tmpStat->OutEdges.begin(); it != tmpStat->OutEdges.end(); it++)
+			{
+				if (!vis[it->End])
+				{
+					if (it->MatchContent == epsilon)
+					{
+						SQ.push(it->End);
+						vis[it->End] = true;
+					}
+					else
+						res.push_back(*it);
+				}
+			}
+		}
+		return res;
+	}
+
+	void DeleteEpsilon()
+	{
+		this->GetStatsList();
+		vector<Edge> OutEdgeList;
+		for (int i = 0; i < this->ValidStats.size(); i++)
+		{
+			for (list<Edge>::iterator it = this->ValidStats[i]->OutEdges.begin(); it != this->ValidStats[i]->OutEdges.end();)
+			{
+				if (it->MatchContent == epsilon)
+					it = this->ValidStats[i]->OutEdges.erase(it);
+				else
+					it++;
+			}
+			OutEdgeList = e_closure(ValidStats[i]);
+			for (int j = 0; j < OutEdgeList.size(); j++)
+			{
+				StatLink(ValidStats[i], OutEdgeList[i].MatchContent, OutEdgeList[i].End);
+			}
+		}
+		for (int i = 0; i < this->unValidStats.size(); i++)
+		{
+			delete this->unValidStats[i];
+		}
 	}
 };
 
