@@ -58,7 +58,6 @@ struct Expr
 struct NFA
 {
 	Status* Start;
-	Status* End;
 	vector<Status*> ValidStats;
 	vector<Status*> unValidStats;
 
@@ -70,5 +69,6 @@ struct NFA
 
 struct DFA
 {
-	
+
+	DFA(char* InputStr);
 };
