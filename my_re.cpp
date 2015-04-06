@@ -70,7 +70,7 @@ void Status::e_LinkStat(Status* S)
 	//		S->AddIn(this, epsilon);
 }
 
-Expr::Expr(Status* in1 = NULL, Status* in2 = NULL)
+Expr::Expr(Status* in1, Status* in2)
 {
 	this->Start = in1;
 	this->End = in2;
@@ -183,8 +183,7 @@ NFA::NFA(char* InputStr)
 		}
 	}
 	this->Start = (exprST.top()).Start;
-	this->End = (exprST.top()).End;
-	(this->End)->FinalStatus = true;
+	(exprST.top()).End->FinalStatus = true;
 	(this->Start)->BeginStatus = true;
 }
 
@@ -236,6 +235,7 @@ void NFA::GetStatsList()
 
 vector<Edge> NFA::e_closure(Status* start)
 {
+	bool ifEnd = false;
 	vector<Edge> res;
 	hash_map<Status*, bool> vis;
 	queue<Status*> SQ;
@@ -255,12 +255,17 @@ vector<Edge> NFA::e_closure(Status* start)
 				{
 					SQ.push(it->End);
 					vis[it->End] = true;
+					if (it->End->FinalStatus)
+						ifEnd = true;
 				}
 				else
-					res.push_back(*it);
+					if (tmpStat != start)
+						res.push_back(*it);
 			}
 		}
 	}
+	if (ifEnd)
+		start->FinalStatus = true;
 	return res;
 }
 
@@ -270,21 +275,21 @@ void NFA::DeleteEpsilon()
 	vector<Edge> OutEdgeList;
 	for (int i = 0; i < this->ValidStats.size(); i++)
 	{
+		OutEdgeList = e_closure(ValidStats[i]);
+		for (int j = 0; j < OutEdgeList.size(); j++)
+			StatLink(ValidStats[i], OutEdgeList[j].MatchContent, OutEdgeList[j].End);
+	}
+	for (int i = 0; i < this->ValidStats.size(); i++)
 		for (list<Edge>::iterator it = this->ValidStats[i]->OutEdges.begin(); it != this->ValidStats[i]->OutEdges.end();)
-		{
 			if (it->MatchContent == epsilon)
 				it = this->ValidStats[i]->OutEdges.erase(it);
 			else
 				it++;
-		}
-		OutEdgeList = e_closure(ValidStats[i]);
-		for (int j = 0; j < OutEdgeList.size(); j++)
-		{
-			StatLink(ValidStats[i], OutEdgeList[i].MatchContent, OutEdgeList[i].End);
-		}
-	}
 	for (int i = 0; i < this->unValidStats.size(); i++)
-	{
 		delete this->unValidStats[i];
-	}
+}
+
+DFA::DFA(char* InputStr)
+{
+	
 }
