@@ -8,8 +8,11 @@
 #include <vector>
 #include <stack>
 #include <hash_map>
+#include <utility>
 
 using namespace std;
+
+#define LargestChar 255
 
 const char epsilon = '\0';
 
@@ -39,8 +42,6 @@ struct Status
 	void e_LinkStat(Status* S);
 };
 
-
-
 struct Expr
 {
 	Status* Start;
@@ -53,8 +54,6 @@ struct Expr
 	void Optional();
 };
 
-
-
 struct NFA
 {
 	Status* Start;
@@ -62,13 +61,26 @@ struct NFA
 	vector<Status*> unValidStats;
 
 	NFA(char* InputStr);
+	~NFA();
 	void GetStatsList();
 	vector<Edge> e_closure(Status* start);
 	void DeleteEpsilon();
 };
 
+struct DetStat
+{
+	vector<pair<char,char>> CompressedCharDict;
+	vector<DetStat*> Nexts;
+	DetStat();
+};
+
 struct DFA
 {
-
+	NFA* nfa;
+	vector<DetStat> StatusList;
+	int CharDict[LargestChar+1];
+	int CompressedTableLength;
+	
+	int BuildDict();
 	DFA(char* InputStr);
 };
