@@ -29,6 +29,7 @@ void oprtCalc(stack<Expr>& exprST, stack<char>& oprtST)
 				exprST.pop();
 				(exprST.top()).Union(tmpExpr);
 				break;
+			case '[':
 			case '(':
 				oprtST.push(tmpch1);
 				return;
@@ -42,6 +43,12 @@ void oprtCalc(stack<Expr>& exprST, stack<char>& oprtST)
 			oprtST.pop();
 			oprtST.pop();
 			oprtST.push('E');
+			break;
+		case '[':
+			oprtST.pop();
+			oprtST.pop();
+			oprtST.push('E');
+			(exprST.top()).Optional();
 			break;
 		}
 	}
@@ -105,7 +112,7 @@ void Expr::Closure()
 
 void Expr::Optional()
 {
-	;
+	this->Start->AddOut(epsilon,this->End);
 }
 
 NFA::NFA(char* InputStr)
@@ -121,10 +128,12 @@ NFA::NFA(char* InputStr)
 	{
 		switch (InputStr[i])
 		{
+		case '[':
 		case '(':
 			oprtST.push(InputStr[i]);
 			i++;
 			break;
+		case ']':
 		case ')':
 			if (InputStr[i + 1] != '*')
 			{
@@ -185,6 +194,12 @@ NFA::NFA(char* InputStr)
 	this->Start = (exprST.top()).Start;
 	(exprST.top()).End->FinalStatus = true;
 	(this->Start)->BeginStatus = true;
+}
+
+NFA::~NFA()
+{
+	for(int i=0;i<this->ValidStats.size();i++)
+		delete this->ValidStats[i];
 }
 
 void NFA::GetStatsList()
@@ -289,7 +304,45 @@ void NFA::DeleteEpsilon()
 		delete this->unValidStats[i];
 }
 
-DFA::DFA(char* InputStr)
+DetStat::DetStat()
 {
 	
+}
+
+int DFA::BuildDict()
+{
+	int i,tmp,flag;
+	list<Edge>::iterator it;
+	for(i=0;i<LargestChar+1;i++)
+		this->CharDict[i] = 0;
+	for(i=0;i<this->nfa->ValidStats.size();i++)
+		for(it=this->nfa->ValidStats[i]->OutEdges.begin();it!=this->nfa->ValidStats[i]->OutEdges.end();it++)
+			this->CharDict[it->MatchContent] = 1;
+	tmp = 1;
+	flag = -1;
+	for(i=0;i<LargestChar;i++)
+	{
+		if(this->CharDict[i]==1 && flag==-1)
+		{
+			flag*=-1;
+			tmp++;
+		}
+		if(this->CharDict[i]==0 && flag==1)
+			flag*=-1;
+		if(flag==1)
+		{
+			this->CharDict[i] = tmp;
+		}else
+		{
+			this->CharDict[i] = 0;
+		}
+	}
+	return tmp;
+}
+
+DFA::DFA(char* InputStr)
+{
+	this->nfa = new NFA(InputStr);
+	this->nfa->DeleteEpsilon();
+	this->CompressedTableLength = this->BuildDict();
 }
