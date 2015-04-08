@@ -9,6 +9,7 @@
 #include <stack>
 #include <hash_map>
 #include <utility>
+#include <set>
 
 using namespace std;
 
@@ -80,6 +81,6 @@ struct DFA
 	int CharDict[LargestChar+1];
 	int CompressedTableLength;
 	
-	int BuildDict();
+	int BuildCharDict();
 	DFA(char* InputStr);
 };
