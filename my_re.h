@@ -69,8 +69,7 @@ struct NFA
 
 struct DetStat
 {
-	vector<pair<char,char>> CompressedCharDict;
-	vector<DetStat*> Nexts;
+	
 	DetStat();
 };
 
