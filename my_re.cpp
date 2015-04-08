@@ -309,31 +309,49 @@ DetStat::DetStat()
 	
 }
 
-int DFA::BuildDict()
+int DFA::BuildCharDict()
 {
 	int i;
 	for(i=0;i<LargestChar+1;i++)
 		this->CharDict[i] = 0;
+	vector < set<char>* > CharSetsList;
 	for (i = 0; i < this->nfa->ValidStats.size(); i++)
 	{
-		hash_map<Status*, vector<char>*> StatVis;
-		vector < vector<char>* > CharSetsList;
+		hash_map<Status*, set<char>*> StatVis;
 		for (list<Edge>::iterator it = this->nfa->ValidStats[i]->OutEdges.begin(); it != this->nfa->ValidStats[i]->OutEdges.end(); it++)
 		{
 			if (!StatVis[it->End])
 			{
-				StatVis[it->End] = new vector<char>;
+				StatVis[it->End] = new set<char>;
 				CharSetsList.push_back(StatVis[it->End]);
 			}
-			(StatVis[it->End])->push_back(it->MatchContent);
+			(StatVis[it->End])->insert(it->MatchContent);
 		}
 	}
-	
+	vector<pair<char, char>> tmpInterval;
+	char tmpchar,tmpleft,tmpright;
+	for (i = 0; i < CharSetsList.size(); i++)
+	{
+		tmpleft = *(CharSetsList[i]->begin());
+		tmpright = tmpright;
+		for (set<char>::iterator it = CharSetsList[i]->begin(); it != CharSetsList[i]->end(); it++)
+		{
+			it++;
+			if (it == CharSetsList[i]->end())
+				break;
+			tmpchar = *it;
+			it--;
+			if ((*it) + 1 != tmpchar)
+			{
+				
+			}
+		}
+	}
 }
 
 DFA::DFA(char* InputStr)
 {
 	this->nfa = new NFA(InputStr);
 	this->nfa->DeleteEpsilon();
-	this->CompressedTableLength = this->BuildDict();
+	this->CompressedTableLength = this->BuildCharDict();
 }
