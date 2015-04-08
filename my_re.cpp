@@ -311,33 +311,24 @@ DetStat::DetStat()
 
 int DFA::BuildDict()
 {
-	int i,tmp,flag;
-	list<Edge>::iterator it;
+	int i;
 	for(i=0;i<LargestChar+1;i++)
 		this->CharDict[i] = 0;
-	for(i=0;i<this->nfa->ValidStats.size();i++)
-		for(it=this->nfa->ValidStats[i]->OutEdges.begin();it!=this->nfa->ValidStats[i]->OutEdges.end();it++)
-			this->CharDict[it->MatchContent] = 1;
-	tmp = 1;
-	flag = -1;
-	for(i=0;i<LargestChar;i++)
+	for (i = 0; i < this->nfa->ValidStats.size(); i++)
 	{
-		if(this->CharDict[i]==1 && flag==-1)
+		hash_map<Status*, vector<char>*> StatVis;
+		vector < vector<char>* > CharSetsList;
+		for (list<Edge>::iterator it = this->nfa->ValidStats[i]->OutEdges.begin(); it != this->nfa->ValidStats[i]->OutEdges.end(); it++)
 		{
-			flag*=-1;
-			tmp++;
-		}
-		if(this->CharDict[i]==0 && flag==1)
-			flag*=-1;
-		if(flag==1)
-		{
-			this->CharDict[i] = tmp;
-		}else
-		{
-			this->CharDict[i] = 0;
+			if (!StatVis[it->End])
+			{
+				StatVis[it->End] = new vector<char>;
+				CharSetsList.push_back(StatVis[it->End]);
+			}
+			(StatVis[it->End])->push_back(it->MatchContent);
 		}
 	}
-	return tmp;
+	
 }
 
 DFA::DFA(char* InputStr)
