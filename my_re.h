@@ -70,17 +70,24 @@ struct NFA
 
 struct DetStat
 {
-	
-	DetStat();
+	bool BeginStatus;
+	bool FinalStatus;
+	int CompressedTableLength;
+	vector<DetStat*>* CompressedTable;
+	DetStat(int length);
+	void SetAsBegin();
+	void SetAsFinal();
 };
 
 struct DFA
 {
 	NFA* nfa;
 	vector<DetStat> StatusList;
-	int CharDict[LargestChar+1];
+	int CharDict[LargestChar+2];
 	int CompressedTableLength;
 	
 	int BuildCharDict();
+	DetStat* AddStatus();
+
 	DFA(char* InputStr);
 };
