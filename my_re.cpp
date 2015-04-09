@@ -304,9 +304,22 @@ void NFA::DeleteEpsilon()
 		delete this->unValidStats[i];
 }
 
-DetStat::DetStat()
+DetStat::DetStat(int length)
 {
-	
+	BeginStatus = false;
+	FinalStatus = false;
+	CompressedTableLength = length;
+	CompressedTable = new vector<DetStat*>(CompressedTableLength);
+}
+
+void DetStat::SetAsBegin()
+{
+	BeginStatus = true;
+}
+
+void DetStat::SetAsFinal()
+{
+	FinalStatus = true;
 }
 
 int DFA::BuildCharDict()
@@ -343,10 +356,42 @@ int DFA::BuildCharDict()
 			it--;
 			if ((*it) + 1 != tmpchar)
 			{
-				
+				tmpInterval.push_back(make_pair(tmpleft,tmpright));
+				tmpleft = tmpchar;
+				tmpright = tmpleft;
 			}
+			else
+				tmpright++;
+		}
+		tmpInterval.push_back(make_pair(tmpleft,tmpright));
+	}
+	for (auto it : tmpInterval)
+	{
+		this->CharDict[it.first] = '[';
+		this->CharDict[it.second + 1] = ')';
+	}
+	int top = 0;
+	for (i = 0; i < LargestChar + 2; i++)
+	{
+		switch (this->CharDict[i])
+		{
+		case '[':
+		case ')':
+			top++;
+			this->CharDict[i] = top;
+			break;
+		default:
+			this->CharDict[i] = top;
+			break;
 		}
 	}
+	return top + 1;
+}
+
+DetStat* DFA::AddStatus()
+{
+	StatusList.push_back(DetStat(CompressedTableLength));
+	return &StatusList.back();//???
 }
 
 DFA::DFA(char* InputStr)
@@ -354,4 +399,8 @@ DFA::DFA(char* InputStr)
 	this->nfa = new NFA(InputStr);
 	this->nfa->DeleteEpsilon();
 	this->CompressedTableLength = this->BuildCharDict();
+	
+	
+	
+	delete nfa;
 }
