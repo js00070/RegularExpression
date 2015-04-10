@@ -346,7 +346,7 @@ int DFA::BuildCharDict()
 	for (i = 0; i < CharSetsList.size(); i++)
 	{
 		tmpleft = *(CharSetsList[i]->begin());
-		tmpright = tmpright;
+		tmpright = tmpleft;
 		for (set<char>::iterator it = CharSetsList[i]->begin(); it != CharSetsList[i]->end(); it++)
 		{
 			it++;
@@ -391,7 +391,19 @@ int DFA::BuildCharDict()
 DetStat* DFA::AddStatus()
 {
 	StatusList.push_back(DetStat(CompressedTableLength));
+	auto a = &StatusList.back();
 	return &StatusList.back();//???
+}
+
+unsigned int DFA::sethash(set<Status*>& S)//without hitting test
+{
+	unsigned int hashval = 1;
+	for (auto it : S)
+	{
+		hashval *= (unsigned int)it;
+		hashval %= BIG_MOD;
+	}
+	return hashval;
 }
 
 DFA::DFA(char* InputStr)
@@ -399,8 +411,49 @@ DFA::DFA(char* InputStr)
 	this->nfa = new NFA(InputStr);
 	this->nfa->DeleteEpsilon();
 	this->CompressedTableLength = this->BuildCharDict();
-	
-	
+	set<Status*> tmpNfaStatsSet;
+	queue<set<Status*>> WorkList;
+	hash_map<unsigned int,DetStat*> DetStatVis;
+	DetStat* tmpDetStat;
+	tmpNfaStatsSet.insert(nfa->Start);
+	WorkList.push(tmpNfaStatsSet);
+	DetStatVis[sethash(tmpNfaStatsSet)] = AddStatus();
+	while (!WorkList.empty())
+	{
+		tmpNfaStatsSet = WorkList.front();
+		WorkList.pop();
+		tmpDetStat = DetStatVis[sethash(tmpNfaStatsSet)];
+		hash_map<char, bool> tmpCharVis;
+		vector<char> OutCharList;
+		for (auto it : tmpNfaStatsSet)
+		{
+			for (auto edge : it->OutEdges)
+			{
+				if (tmpCharVis[edge.MatchContent])
+					continue;
+				tmpCharVis[edge.MatchContent] = true;
+				OutCharList.push_back(edge.MatchContent);
+			}
+		}
+		set<Status*> tmpset;
+		for (auto ch : OutCharList)
+		{
+			tmpset.clear();
+			for (auto it : tmpNfaStatsSet)
+			{
+				for (auto edge : it->OutEdges)
+				{
+					if (edge.MatchContent != ch)
+						continue;
+					tmpset.insert(edge.End);
+				}
+			}
+			if (!DetStatVis[sethash(tmpset)])
+			{
+				DetStatVis[sethash(tmpset)] = AddStatus();
+			}
+		}
+	}
 	
 	delete nfa;
 }
