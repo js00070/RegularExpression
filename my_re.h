@@ -14,6 +14,7 @@
 using namespace std;
 
 #define LargestChar 255
+#define BIG_MOD 100007;
 
 const char epsilon = '\0';
 
@@ -21,6 +22,7 @@ struct Edge;
 struct Status;
 void StatLink();
 void oprtCalc();
+
 
 struct Edge
 {
@@ -74,6 +76,7 @@ struct DetStat
 	bool FinalStatus;
 	int CompressedTableLength;
 	vector<DetStat*>* CompressedTable;
+	
 	DetStat(int length);
 	void SetAsBegin();
 	void SetAsFinal();
@@ -88,6 +91,6 @@ struct DFA
 	
 	int BuildCharDict();
 	DetStat* AddStatus();
-
+	unsigned int sethash(set<Status*>& S);
 	DFA(char* InputStr);
 };
