@@ -304,12 +304,13 @@ void NFA::DeleteEpsilon()
 		delete this->unValidStats[i];
 }
 
-DetStat::DetStat(int length)
+DetStat::DetStat(DFA* dfa,int length)
 {
+	from = dfa;
 	BeginStatus = false;
 	FinalStatus = false;
 	CompressedTableLength = length;
-	CompressedTable = new vector<DetStat*>(CompressedTableLength);
+	CompressedTable = new vector<int>(CompressedTableLength);
 }
 
 void DetStat::SetAsBegin()
@@ -388,14 +389,13 @@ int DFA::BuildCharDict()
 	return top + 1;
 }
 
-DetStat* DFA::AddStatus()
+int DFA::AddStatus()
 {
-	StatusList.push_back(DetStat(CompressedTableLength));
-	auto a = &StatusList.back();
-	return &StatusList.back();//???
+	StatusList.push_back(DetStat(this,CompressedTableLength));
+	return StatusList.size() - 1;
 }
 
-unsigned int DFA::sethash(set<Status*>& S)//without hitting test
+unsigned int DFA::sethash(set<Status*>& S)//without hitting test, may be in peril
 {
 	unsigned int hashval = 1;
 	for (auto it : S)
@@ -413,8 +413,8 @@ DFA::DFA(char* InputStr)
 	this->CompressedTableLength = this->BuildCharDict();
 	set<Status*> tmpNfaStatsSet;
 	queue<set<Status*>> WorkList;
-	hash_map<unsigned int,DetStat*> DetStatVis;
-	DetStat* tmpDetStat;
+	hash_map<unsigned int,int> DetStatVis;
+	int tmpDetStatNum;
 	tmpNfaStatsSet.insert(nfa->Start);
 	WorkList.push(tmpNfaStatsSet);
 	DetStatVis[sethash(tmpNfaStatsSet)] = AddStatus();
@@ -422,7 +422,7 @@ DFA::DFA(char* InputStr)
 	{
 		tmpNfaStatsSet = WorkList.front();
 		WorkList.pop();
-		tmpDetStat = DetStatVis[sethash(tmpNfaStatsSet)];
+		tmpDetStatNum = DetStatVis[sethash(tmpNfaStatsSet)];
 		hash_map<char, bool> tmpCharVis;
 		vector<char> OutCharList;
 		for (auto it : tmpNfaStatsSet)
@@ -451,7 +451,9 @@ DFA::DFA(char* InputStr)
 			if (!DetStatVis[sethash(tmpset)])
 			{
 				DetStatVis[sethash(tmpset)] = AddStatus();
+
 			}
+
 		}
 	}
 	
