@@ -72,14 +72,16 @@ struct NFA
 
 struct DetStat
 {
+	DFA* from;
 	bool BeginStatus;
 	bool FinalStatus;
 	int CompressedTableLength;
-	vector<DetStat*>* CompressedTable;
+	vector<int>* CompressedTable;
 	
-	DetStat(int length);
+	DetStat(DFA* dfa,int length);
 	void SetAsBegin();
 	void SetAsFinal();
+	void AddEdge(int CompressedStatNum,DetStat* End);
 };
 
 struct DFA
@@ -90,7 +92,7 @@ struct DFA
 	int CompressedTableLength;
 	
 	int BuildCharDict();
-	DetStat* AddStatus();
+	int AddStatus();//return the number of Stat in StatusList
 	unsigned int sethash(set<Status*>& S);
 	DFA(char* InputStr);
 };
