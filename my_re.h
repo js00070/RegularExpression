@@ -70,6 +70,8 @@ struct NFA
 	void DeleteEpsilon();
 };
 
+struct DFA;
+
 struct DetStat
 {
 	DFA* from;
@@ -81,7 +83,7 @@ struct DetStat
 	DetStat(DFA* dfa,int length);
 	void SetAsBegin();
 	void SetAsFinal();
-	void AddEdge(int CompressedStatNum,DetStat* End);
+	void AddEdge(int CompressedStatNum,int End);
 };
 
 struct DFA
@@ -95,4 +97,5 @@ struct DFA
 	int AddStatus();//return the number of Stat in StatusList
 	unsigned int sethash(set<Status*>& S);
 	DFA(char* InputStr);
+	int parser(char* src);
 };
