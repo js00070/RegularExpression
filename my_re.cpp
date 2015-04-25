@@ -123,7 +123,6 @@ NFA::NFA(char* InputStr)
 	stack<char> oprtST;//operator
 	Expr tmpExpr;
 	Status* tmpStat;
-	char tmpch;
 	while (!StrEnd)
 	{
 		switch (InputStr[i])
@@ -256,7 +255,7 @@ vector<Edge> NFA::e_closure(Status* start)
 	queue<Status*> SQ;
 	Status* tmpStat;
 	SQ.push(start);
-	vis[start] = true;
+//	vis[start] = true;
 	while (!SQ.empty())
 	{
 		tmpStat = SQ.front();
@@ -311,6 +310,8 @@ DetStat::DetStat(DFA* dfa,int length)
 	FinalStatus = false;
 	CompressedTableLength = length;
 	CompressedTable = new vector<int>(CompressedTableLength);
+	for (auto it : (*CompressedTable))
+		it = -1;
 }
 
 void DetStat::SetAsBegin()
@@ -321,6 +322,11 @@ void DetStat::SetAsBegin()
 void DetStat::SetAsFinal()
 {
 	FinalStatus = true;
+}
+
+void DetStat::AddEdge(int CompressedStatNum,int End)
+{
+	(*CompressedTable)[CompressedStatNum] = End;
 }
 
 int DFA::BuildCharDict()
@@ -392,7 +398,7 @@ int DFA::BuildCharDict()
 int DFA::AddStatus()
 {
 	StatusList.push_back(DetStat(this,CompressedTableLength));
-	return StatusList.size() - 1;
+	return StatusList.size();//not size-1 because if it is zero then it will be mistaken as NULL
 }
 
 unsigned int DFA::sethash(set<Status*>& S)//without hitting test, may be in peril
@@ -414,7 +420,7 @@ DFA::DFA(char* InputStr)
 	set<Status*> tmpNfaStatsSet;
 	queue<set<Status*>> WorkList;
 	hash_map<unsigned int,int> DetStatVis;
-	int tmpDetStatNum;
+	int tmpDetStatNum, tmp;
 	tmpNfaStatsSet.insert(nfa->Start);
 	WorkList.push(tmpNfaStatsSet);
 	DetStatVis[sethash(tmpNfaStatsSet)] = AddStatus();
@@ -427,6 +433,10 @@ DFA::DFA(char* InputStr)
 		vector<char> OutCharList;
 		for (auto it : tmpNfaStatsSet)
 		{
+			if (it->BeginStatus)
+				StatusList[tmpDetStatNum - 1].SetAsBegin();
+			if (it->FinalStatus)
+				StatusList[tmpDetStatNum - 1].SetAsFinal();
 			for (auto edge : it->OutEdges)
 			{
 				if (tmpCharVis[edge.MatchContent])
@@ -450,12 +460,33 @@ DFA::DFA(char* InputStr)
 			}
 			if (!DetStatVis[sethash(tmpset)])
 			{
-				DetStatVis[sethash(tmpset)] = AddStatus();
-
+				tmp = AddStatus();
+				DetStatVis[sethash(tmpset)] = tmp;
+				StatusList[tmpDetStatNum - 1].AddEdge(CharDict[ch],tmp-1);
+				WorkList.push(tmpset);
 			}
 
 		}
 	}
 	
 	delete nfa;
+}
+
+int DFA::parser(char* src)
+{
+	char *pch = src;
+	char *validpch = src;
+	int pStat = 0;
+	int next;
+	while (*pch)
+	{
+		next = (*(StatusList[pStat].CompressedTable))[CharDict[*pch]];
+		if (next == -1)
+			return validpch - src;
+		pStat = next;
+		pch++;
+		if (StatusList[pStat].FinalStatus)
+			validpch = pch;
+	}
+	return validpch - src;
 }
