@@ -86,6 +86,7 @@ Expr::Expr(Status* in1, Status* in2)
 void Expr::Link(Expr follow)
 {
 	(this->End)->e_LinkStat(follow.Start);
+	this->End = follow.End;
 }
 
 void Expr::Union(Expr follow)
@@ -123,16 +124,31 @@ NFA::NFA(char* InputStr)
 	stack<char> oprtST;//operator
 	Expr tmpExpr;
 	Status* tmpStat;
+	char chFirst, chLast;
 	while (!StrEnd)
 	{
 		switch (InputStr[i])
 		{
+		case '*':
+			oprtST.push('*');
+			oprtCalc(exprST, oprtST);
+			i++;
+			break;
 		case '[':
+			chFirst = InputStr[i + 1];
+			chLast = InputStr[i + 3];
+			i += 5;
+			oprtST.push('E');
+			exprST.push(Expr(new Status,new Status));
+			for (char ch = chFirst; ch <= chLast; ch++)
+			{
+				(exprST.top()).Start->AddOut(ch,(exprST.top()).End);
+			}
+			break;
 		case '(':
 			oprtST.push(InputStr[i]);
 			i++;
 			break;
-		case ']':
 		case ')':
 			if (InputStr[i + 1] != '*')
 			{
@@ -310,7 +326,7 @@ DetStat::DetStat(DFA* dfa,int length)
 	FinalStatus = false;
 	CompressedTableLength = length;
 	CompressedTable = new vector<int>(CompressedTableLength);
-	for (auto it : (*CompressedTable))
+	for (auto &it : (*CompressedTable))
 		it = -1;
 }
 
@@ -464,6 +480,11 @@ DFA::DFA(char* InputStr)
 				DetStatVis[sethash(tmpset)] = tmp;
 				StatusList[tmpDetStatNum - 1].AddEdge(CharDict[ch],tmp-1);
 				WorkList.push(tmpset);
+			}
+			else
+			{
+				tmp = DetStatVis[sethash(tmpset)];
+				StatusList[tmpDetStatNum - 1].AddEdge(CharDict[ch], tmp - 1);
 			}
 
 		}
