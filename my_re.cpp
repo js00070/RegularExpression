@@ -144,6 +144,8 @@ NFA::NFA(char* InputStr)
 			{
 				(exprST.top()).Start->AddOut(ch,(exprST.top()).End);
 			}
+			if (InputStr[i] != '*')
+				oprtCalc(exprST,oprtST);
 			break;
 		case '(':
 			oprtST.push(InputStr[i]);
@@ -206,6 +208,7 @@ NFA::NFA(char* InputStr)
 			break;
 		}
 	}
+	oprtCalc(exprST, oprtST);
 	this->Start = (exprST.top()).Start;
 	(exprST.top()).End->FinalStatus = true;
 	(this->Start)->BeginStatus = true;
