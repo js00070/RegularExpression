@@ -5,8 +5,8 @@ using namespace std;
 
 int main()
 {
-	DFA a("(fuck)|(fuckk)|(fuckkd)");
-	int tmp = a.parser("fuckkdd");
+	DFA a("[a-z]*1*");
+	int tmp = a.parser("fisaehfk1113222");
 	cout << tmp << endl;
 	system("pause");
 	return 0;
