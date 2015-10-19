@@ -1,4 +1,6 @@
 //my regular expression
+#ifndef REGEX_H
+#define REGEX_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -99,3 +101,4 @@ struct DFA
 	DFA(char* InputStr);
 	int parser(char* src);
 };
+#endif
